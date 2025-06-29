@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIE平台 - 品牌AI能見度洞察</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f9fafb;
+            color: #111827;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .header {
+            background-color: white;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 1rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .card {
+            background-color: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .warning {
+            display: inline-flex;
+            align-items: center;
+            font-size: 0.75rem;
+            color: #d97706;
+            background-color: #fef3c7;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            margin-left: 0.5rem;
+        }
+
+        .warning i {
+            width: 1rem;
+            height: 1rem;
+            margin-right: 0.375rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 0.25rem;
+        }
+
+        .form-input, .form-textarea {
+            padding: 0.75rem 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-input:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.375rem;
+            font-size: 1rem;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            background-color: #6366f1;
+            color: white;
+        }
+
+        .btn:hover {
+            background-color: #5855eb;
+        }
+
+        .btn:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .btn i {
+            width: 1.25rem;
+            height: 1.25rem;
+            margin-right: 0.5rem;
+        }
+
+        .btn-center {
+            text-align: center;
+        }
+
+        .spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2.5rem 0;
+        }
+
+        .spinner i {
+            width: 3rem;
+            height: 3rem;
+            color: #6366f1;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .error {
+            background-color: #fef2f2;
+            border-left: 4px solid #ef4444;
+            color: #dc2626;
+            padding: 1rem;
+            border-radius: 0.375rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .error strong {
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .question-list {
+            list-style: none;
+        }
+
+        .question-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+            font-size: 0.875rem;
+        }
+
+        .question-tag {
+            flex-shrink: 0;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            margin-right: 0.75rem;
+        }
+
+        .tag-red {
+            background-color: #fee2e2;
+            color: #dc2626;
+        }
+
+        .tag-blue {
+            background-color: #dbeafe;
+            color: #2563eb;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 200px;
+        }
+
+        .chart-container.large {
+            height: 400px;
+        }
+
+        .text-xs {
+            font-size: 0.75rem;
+        }
+
+        .text-gray-500 {
+            color: #6b7280;
+        }
+
+        .mb-4 {
+            margin-bottom: 1rem;
+        }
+
+        .mt-2 {
+            margin-top: 0.5rem;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .suggest-btn {
+            position: absolute;
+            right: 0.25rem;
+            top: 1.75rem;
+            font-size: 0.75rem;
+            color: #6366f1;
+            background-color: #eef2ff;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+
+        .suggest-btn:hover {
+            background-color: #e0e7ff;
+        }
+
+        .suggest-btn i {
+            width: 1rem;
+            height: 1rem;
+            margin-right: 0.25rem;
+        }
+
+        .relative {
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <h1>SIE平台 - 品牌AI能見度洞察 (HTML版本)</h1>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- 輸入區域 -->
+        <div class="card">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label" for="industry">行業類別</label>
+                    <input type="text" id="industry" class="form-input" value="智慧型手機" placeholder="例如：智慧型手機、美妝保養">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="brand">您的品牌</label>
+                    <input type="text" id="brand" class="form-input" value="Apple iPhone 15 Pro" placeholder="例如：品牌A">
+                </div>
+                <div class="form-group relative">
+                    <label class="form-label" for="competitors">競爭對手 (以逗號分隔)</label>
+                    <input type="text" id="competitors" class="form-input" value="Samsung Galaxy S24 Ultra, Google Pixel 8 Pro" placeholder="例如：品牌B, 品牌C">
+                    <button class="suggest-btn" onclick="suggestCompetitors()">
+                        <i data-lucide="lightbulb"></i> 建議對手
+                    </button>
+                </div>
+                <div class="form-group full-width">
+                    <label class="form-label" for="description">品牌官方標準描述 (用於正確度分析)</label>
+                    <textarea id="description" class="form-textarea" placeholder="請輸入品牌的官方標準描述">iPhone 15 Pro 擁有航太等級鈦金屬設計，配備 A17 Pro 晶片，提供歷來最強的繪圖處理效能。相機系統更強大，具備 4800 萬像素主相機，以及 5 倍望遠相機。</textarea>
+                </div>
+            </div>
+            <div class="btn-center">
+                <button class="btn" onclick="handleAnalysis()" id="analyzeBtn">
+                    <i data-lucide="search"></i> 開始分析
+                </button>
+            </div>
+        </div>
+
+        <!-- 載入中 -->
+        <div id="loading" class="spinner hidden">
+            <i data-lucide="loader-2"></i>
+        </div>
+
+        <!-- 錯誤訊息 -->
+        <div id="error" class="error hidden">
+            <strong>發生錯誤</strong>
+            <span id="errorMessage"></span>
+        </div>
+
+        <!-- 結果區域 -->
+        <div id="results" class="hidden">
+            <div class="results-grid">
+                <!-- 熱門問題 -->
+                <div class="card">
+                    <div class="card-title">
+                        AI助理最常被問的五大問題
+                    </div>
+                    <ul class="question-list" id="questionList"></ul>
+                </div>
+
+                <!-- 提及次數 -->
+                <div class="card">
+                    <div class="card-title">
+                        最熱門問題中，品牌與競品提及次數
+                        <span id="mentionWarning" class="warning hidden">
+                            <i data-lucide="alert-triangle"></i>
+                            <span>提及量落後主要對手</span>
+                        </span>
+                    </div>
+                    <p class="text-xs text-gray-500 mb-4" id="mentionQuestion"></p>
+                    <div class="chart-container">
+                        <canvas id="mentionChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- 正確度分析 -->
+                <div class="card">
+                    <div class="card-title">
+                        各問題資訊正確度分析 (%)
+                        <span id="accuracyWarning" class="warning hidden">
+                            <i data-lucide="alert-triangle"></i>
+                            <span>平均資訊覆蓋率偏低</span>
+                        </span>
+                    </div>
+                    <p class="text-xs text-gray-500 mb-4">比對AI回應與官方描述的覆蓋率</p>
+                    <div class="chart-container">
+                        <canvas id="accuracyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 整體提及率 -->
+            <div class="card">
+                <div class="card-title">品牌與競品在各熱門問題的曝光提及率</div>
+                <div class="chart-container large">
+                    <canvas id="overallChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 初始化 Lucide 圖示
+        lucide.createIcons();
+
+        // 常數
+        const API_KEY = 'AIzaSyDyAveAcjHnQ_KIa6x0O9ZUt2BZKx41zc8';
+        const BAR_COLORS = ['#4f46e5', '#818cf8', '#a5b4fc'];
+
+        // 問題分類規則
+const QUESTION_CLASSIFIER_RULES = {
+    "使用教學/售後服務型": { keywords: ["如何設定", "怎麼用", "使用教學", "操作", "安裝", "配對", "啟用", "註冊", "功能介紹", "說明書", "手冊", "驅動程式", "韌體", "更新", "下載", "故障", "沒反應", "無法開機", "當機", "黑畫面", "閃退", "連不上", "沒聲音", "顯示錯誤", "錯誤代碼", "維修", "送修", "維修中心", "修理", "保固", "保固多久", "保固條款", "客服", "客服電話", "聯絡方式", "退貨", "換貨", "RMA"], priority: 10 },
+    "比較型": { keywords: ["比較", "vs", "對比", "哪個好", "差異", "優缺點", "評比", "和", "怎麼選", "選擇", "差別", "A還是B", "A跟B", "分析", "替代方案", "對手"], priority: 9 },
+    "價格型": { keywords: ["多少錢", "價格", "售價", "報價", "預算", "費用", "定價", "CP值", "C/P值", "性價比", "划算", "便宜", "優惠", "折扣", "折價券", "優惠碼", "活動價", "特價", "折扣碼", "週年慶", "母親節", "父親節", "雙11", "雙十二", "黑色星期五", "黑五", "學生價", "教育價", "教職員", "哪裡買", "通路"], priority: 8 },
+    "評價/口碑型": { keywords: ["評價", "心得", "評論", "好用嗎", "值得買", "推薦文", "開箱", "體驗", "使用經驗", "用戶回饋", "大家覺得", "網友說", "災情", "缺點", "雷", "反推", "不要買", "問題", "毛病", "通病", "PTT", "Dcard", "Mobile01", "01", "YT", "臉書社團", "媽咪拜"], priority: 7 },
+    "問題解決型/需求導向型": { keywords: ["如何解決", "怎麼辦", "太耗電", "過熱", "延遲", "模糊", "空間不足", "很慢", "很卡", "收不到", "不夠用", "很吵", "加速", "最佳化", "優化", "省電", "更清晰", "擴充", "改善", "提升", "有什麼方法", "怎麼讓"], priority: 6 },
+    "推薦型": { keywords: ["推薦", "建議", "求", "找一款", "適合", "幫我找", "有沒有推薦", "請益", "求推薦", "求建議", "送禮", "新手用", "長輩用", "辦公用", "遊戲用", "文書機"], priority: 5 },
+    "功能/規格型": { keywords: ["規格", "功能", "效能", "性能", "材質", "版本", "型號", "尺寸", "重量", "顏色", "電池", "續航力", "處理器", "CPU", "GPU", "顯卡", "記憶體", "RAM", "硬碟", "SSD", "容量", "螢幕", "解析度", "更新率", "ppi", "面板", "亮度", "Nits", "藍牙", "Wi-Fi", "NFC", "連接埠", "接口", "HDMI", "Type-C", "Thunderbolt", "相機", "畫素", "鏡頭", "光圈", "感光元件", "防水", "防塵", "IP等級", "支援", "具備"], priority: 4 },
+    "品牌導向型": { keywords: ["官網", "官方網站", "是哪一國", "歷史", "創辦人", "執行長", "CEO", "公司", "集團", "旗下品牌", "理念", "願景", "環保", "CSR", "企業責任", "永續", "ESG", "門市", "分店", "專櫃", "地址", "電話", "聯絡", "據點"], priority: 3 },
+    "資訊型": { keywords: ["什麼是", "為什麼", "如何運作", "誰", "何時", "何地", "原理", "定義", "介紹", "解說", "懶人包", "白話文", "意思是", "由來", "有哪些", "知識"], priority: 2 }
+};
+
+        // 分類問題
+        function classifyQuestion(questionText) {
+    for (const [category, { keywords }] of Object.entries(QUESTION_CLASSIFIER_RULES)) {
+        if (keywords.some(keyword => questionText.toLowerCase().includes(keyword.toLowerCase()))) {
+            return category;
+        }
+    }
+            return "資訊型";
+        }
+
+        // 建議競爭對手
+        function suggestCompetitors() {
+            const industry = document.getElementById('industry').value;
+      if (industry.includes('手機')) {
+                document.getElementById('competitors').value = 'Samsung Galaxy S24 Ultra, Google Pixel 8 Pro, Sony Xperia 1 VI';
+      } else if (industry.includes('咖啡')) {
+                document.getElementById('competitors').value = 'Starbucks, Louisa Coffee, Cama Café';
+      } else {
+                document.getElementById('competitors').value = '';
+            }
+        }
+
+        // 呼叫 Gemini API
+        async function callGeminiAPI(prompt, responseSchema) {
+            const payload = {
+                contents: [{ role: "user", parts: [{ text: prompt }] }],
+                generationConfig: { 
+                    responseMimeType: "application/json", 
+                    responseSchema: responseSchema, 
+                    temperature: 0.2 
+                }
+            };
+            
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
+    
+    try {
+                const response = await fetch(apiUrl, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify(payload) 
+                });
+                
+      if (!response.ok) {
+        const errorBody = await response.json();
+        throw new Error(`API 請求失敗: ${response.status}. ${errorBody?.error?.message || ''}`);
+      }
+                
+      const result = await response.json();
+      if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
+        return JSON.parse(result.candidates[0].content.parts[0].text);
+                } else { 
+                    throw new Error("從 API 收到的回應格式不正確或為空。"); 
+                }
+    } catch (err) {
+      console.error("Gemini API Call Error:", err);
+      throw err;
+    }
+        }
+
+        // 顯示載入狀態
+        function showLoading() {
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('results').classList.add('hidden');
+            document.getElementById('error').classList.add('hidden');
+            document.getElementById('analyzeBtn').disabled = true;
+        }
+
+        // 隱藏載入狀態
+        function hideLoading() {
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('analyzeBtn').disabled = false;
+        }
+
+        // 顯示錯誤
+        function showError(message) {
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('error').classList.remove('hidden');
+        }
+
+        // 隱藏錯誤
+        function hideError() {
+            document.getElementById('error').classList.add('hidden');
+        }
+
+        // 顯示結果
+        function showResults() {
+            document.getElementById('results').classList.remove('hidden');
+        }
+
+        // 建立提及次數圖表
+        function createMentionChart(data) {
+            const ctx = document.getElementById('mentionChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(item => item.name),
+                    datasets: [{
+                        label: '提及次數',
+                        data: data.map(item => item.mentions),
+                        backgroundColor: '#4f46e5',
+                        borderColor: '#4f46e5',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        // 建立正確度圖表
+        function createAccuracyChart(data) {
+            const ctx = document.getElementById('accuracyChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(item => item.question_id),
+                    datasets: [{
+                        label: '覆蓋率',
+                        data: data.map(item => item.coverage_rate),
+                        backgroundColor: '#4f46e5',
+                        borderColor: '#4f46e5',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.parsed.y + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 建立整體提及率圖表
+        function createOverallChart(data, brand, competitors) {
+            const ctx = document.getElementById('overallChart').getContext('2d');
+            const allBrands = [brand, ...competitors];
+            const datasets = allBrands.map((brandName, index) => ({
+                label: brandName,
+                data: data.map(item => item[brandName] || 0),
+                backgroundColor: BAR_COLORS[index % BAR_COLORS.length],
+                borderColor: BAR_COLORS[index % BAR_COLORS.length],
+                borderWidth: 1
+            }));
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(item => item.name),
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        }
+                    }
+                }
+            });
+        }
+
+        // 主要分析函數
+        async function handleAnalysis() {
+            const industry = document.getElementById('industry').value;
+            const brand = document.getElementById('brand').value;
+            const competitors = document.getElementById('competitors').value;
+            const officialDescription = document.getElementById('description').value;
+
+            if (!officialDescription.trim()) {
+                showError('請輸入品牌官方標準描述');
+                return;
+            }
+
+            showLoading();
+            hideError();
+
+            try {
+                // Step 1: 獲取熱門問題
+      const questionPrompt = `針對 "${industry}" 這個行業，根據 SEO 原則與使用者搜尋意圖，列出 5 個最重要且最常被詢問的問題。請為每個問題提供一個 1 到 10 的重要性分數 (10為最重要)。`;
+                const questionSchema = { 
+                    type: "OBJECT", 
+                    properties: { 
+                        questions: { 
+                            type: "ARRAY", 
+                            items: { 
+                                type: "OBJECT", 
+                                properties: { 
+                                    text: { type: "STRING" }, 
+                                    importance: { type: "NUMBER" } 
+                                }, 
+                                required: ["text", "importance"] 
+                            } 
+                        } 
+                    }, 
+                    required: ["questions"] 
+                };
+                
+      const questionResult = await callGeminiAPI(questionPrompt, questionSchema);
+      const fetchedQuestions = questionResult.questions
+        .sort((a, b) => b.importance - a.importance)
+        .slice(0, 5)
+        .map((q, i) => ({ ...q, id: i + 1, tag: classifyQuestion(q.text) }));
+
+                if (fetchedQuestions.length === 0) {
+                    throw new Error("未能獲取任何熱門問題。");
+                }
+
+                // 顯示問題列表
+                const questionList = document.getElementById('questionList');
+                questionList.innerHTML = fetchedQuestions.map(q => `
+                    <li class="question-item">
+                        <span class="question-tag ${q.tag === '價格型' || q.tag === '比較型' ? 'tag-red' : 'tag-blue'}">${q.tag}</span>
+                        <span>${q.text}</span>
+                    </li>
+                `).join('');
+
+      const topQuestionText = fetchedQuestions[0].text;
+                document.getElementById('mentionQuestion').textContent = `針對問題: "${topQuestionText}"`;
+
+                // Step 2: 分析提及次數
+      const competitorList = competitors.split(',').map(c => c.trim()).filter(c => c);
+      const allBrands = [brand.trim(), ...competitorList];
+      const mentionPrompt = `假設在網路搜尋「${topQuestionText}」的答案，品牌 "${brand}" 及競品 "${competitorList.join(', ')}" 的預估提及次數是多少？`;
+                const mentionSchema = { 
+                    type: "ARRAY", 
+                    items: { 
+                        type: "OBJECT", 
+                        properties: { 
+                            name: { type: "STRING" }, 
+                            mentions: { type: "NUMBER" } 
+                        }, 
+                        required: ["name", "mentions"] 
+                    } 
+                };
+                
+      const mentionResult = await callGeminiAPI(mentionPrompt, mentionSchema);
+      const mentionMap = new Map(mentionResult.map(item => [item.name, item.mentions]));
+      const fullMentionData = allBrands.map(b => ({ name: b, mentions: mentionMap.get(b) || 0 }));
+
+                // 檢查警告
+      const myBrandMentions = mentionMap.get(brand.trim()) || 0;
+      const topCompetitorMentions = Math.max(0, ...competitorList.map(c => mentionMap.get(c) || 0));
+      if (competitorList.length > 0 && myBrandMentions < topCompetitorMentions) {
+                    document.getElementById('mentionWarning').classList.remove('hidden');
+      }
+
+                // Step 3: 分析資訊正確度
+      const accuracyPrompt = `這是品牌 "${brand}" 的官方標準描述：「${officialDescription}」。\n請針對以下 5 個問題，分別生成一個包含品牌 "${brand}" 的回應，然後比對該回應與官方描述，評估其核心資訊點的覆蓋率。\n\n問題列表:\n${fetchedQuestions.map(q => `Q${q.id}: ${q.text}`).join('\n')}`;
+      const accuracySchema = {
+          type: "ARRAY",
+          items: {
+              type: "OBJECT",
+              properties: {
+                  question_id: { type: "STRING", description: "問題編號, 例如 'Q1'" },
+                  coverage_rate: { type: "NUMBER", description: "一個0到1之間的小數，代表核心資訊點的覆蓋率" }
+              },
+              required: ["question_id", "coverage_rate"]
+          }
+      };
+                
+      const accuracyResult = await callGeminiAPI(accuracyPrompt, accuracySchema);
+                const accuracyData = accuracyResult.map(r => ({...r, coverage_rate: Math.round(r.coverage_rate * 100)}));
+      
+                // 檢查正確度警告
+      const avgAccuracy = accuracyResult.reduce((sum, r) => sum + r.coverage_rate, 0) / accuracyResult.length;
+      if (avgAccuracy < 0.6) {
+                    document.getElementById('accuracyWarning').classList.remove('hidden');
+      }
+
+                // Step 4: 分析整體提及率
+      const overallMentionPrompt = `針對以下 5 個問題，請分別估算品牌 "${brand}" 以及競品 "${competitorList.join(', ')}" 在相關網路討論中的提及次數。`;
+      const overallMentionSchema = {
+                    type: "ARRAY", 
+                    items: { 
+                        type: "OBJECT", 
+                        properties: { 
+                            question_id: { type: "STRING" }, 
+                            mentions: { 
+                                type: "ARRAY", 
+                                items: { 
+                                    type: "OBJECT", 
+                                    properties: { 
+                                        name: { type: "STRING" }, 
+                                        count: { type: "NUMBER" } 
+                                    }, 
+                                    required: ["name", "count"] 
+                                } 
+                            } 
+                        }, 
+                        required: ["question_id", "mentions"] 
+                    }
+                };
+                
+      const detailedOverallPrompt = `${overallMentionPrompt}\n\n問題列表：\n${fetchedQuestions.map(q => `Q${q.id}: ${q.text}`).join('\n')}`;
+      const overallResult = await callGeminiAPI(detailedOverallPrompt, overallMentionSchema);
+      const formattedOverallData = fetchedQuestions.map((q) => {
+        const resultForQ = overallResult.find(r => r.question_id === `Q${q.id}` || r.question_id === String(q.id));
+        const dataPoint = { name: `Q${q.id}` };
+        allBrands.forEach(b => {
+          const mention = resultForQ?.mentions.find(m => m.name === b);
+          dataPoint[b] = mention?.count || 0;
+        });
+        return dataPoint;
+      });
+
+                // 建立圖表
+                createMentionChart(fullMentionData);
+                createAccuracyChart(accuracyData);
+                createOverallChart(formattedOverallData, brand.trim(), competitorList);
+
+                showResults();
+
+    } catch (err) {
+                showError(err.message || '分析過程中發生未知錯誤。');
+    } finally {
+                hideLoading();
+            }
+        }
+    </script>
+</body>
+</html> 
