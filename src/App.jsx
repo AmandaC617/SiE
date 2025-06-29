@@ -3,7 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { Loader2, Search, AlertTriangle, Lightbulb } from 'lucide-react';
 
 // --- Helper Functions & Constants ---
-const API_KEY = ""; // Gemini API Key will be provided by the environment
+const API_KEY = process.env.REACT_APP_GEMINI_API_KEY || ""; // Gemini API Key from environment
 const BAR_COLORS = ['#4f46e5', '#818cf8', '#a5b4fc']; // Colors for Brand vs Competitors
 
 // This is the question classification rule database from the user's uploaded file.
@@ -48,7 +48,6 @@ const CardTitle = ({ children, warning }) => (
       )}
   </div>
 );
-
 
 const Button = ({ children, onClick, disabled = false, className = '' }) => (
   <button
@@ -124,7 +123,6 @@ export default function App() {
           setCompetitors('');
       }
   };
-
 
   // --- API Call Logic ---
   const callGeminiAPI = useCallback(async (prompt, responseSchema) => {
@@ -239,7 +237,6 @@ export default function App() {
   
   const competitorNames = useMemo(() => competitors.split(',').map(c => c.trim()).filter(c => c), [competitors]);
 
-
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
       <header className="bg-white shadow-sm">
@@ -303,7 +300,7 @@ export default function App() {
                 <CardTitle warning={mentionWarning}>最熱門問題中，品牌與競品提及次數</CardTitle>
                 <p className="text-xs text-gray-500 mb-4 -mt-2">針對問題: "{topQuestions[0]?.text}"</p>
                 <div className="flex-grow">
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer width="100%" height={200}>
                     <BarChart data={mentionData} layout="vertical" margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis type="number" allowDecimals={false} />
@@ -319,7 +316,7 @@ export default function App() {
                 <CardTitle warning={accuracyWarning}>各問題資訊正確度分析 (%)</CardTitle>
                  <p className="text-xs text-gray-500 mb-4 -mt-2">比對AI回應與官方描述的覆蓋率</p>
                 <div className="flex-grow">
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height={200}>
                         <BarChart data={accuracyData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="question_id" />
@@ -353,5 +350,4 @@ export default function App() {
       </main>
     </div>
   );
-}
-
+} 
