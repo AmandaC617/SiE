@@ -413,6 +413,145 @@ const QUESTION_CLASSIFIER_RULES = {
             return "資訊型";
         }
 
+        // 全局圖表實例
+        let mentionChartInstance = null;
+        let accuracyChartInstance = null;
+        let overallChartInstance = null;
+
+        // 銷毀圖表函數
+        function destroyChart(chartInstance) {
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+        }
+
+        // 建立提及次數圖表
+        function createMentionChart(data) {
+            // 銷毀舊的圖表
+            destroyChart(mentionChartInstance);
+            
+            const ctx = document.getElementById('mentionChart').getContext('2d');
+            mentionChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(item => item.name),
+                    datasets: [{
+                        label: '提及次數',
+                        data: data.map(item => item.mentions),
+                        backgroundColor: '#4f46e5',
+                        borderColor: '#4f46e5',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        // 建立正確度圖表
+        function createAccuracyChart(data) {
+            // 銷毀舊的圖表
+            destroyChart(accuracyChartInstance);
+            
+            const ctx = document.getElementById('accuracyChart').getContext('2d');
+            accuracyChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(item => item.question_id),
+                    datasets: [{
+                        label: '覆蓋率',
+                        data: data.map(item => item.coverage_rate),
+                        backgroundColor: '#4f46e5',
+                        borderColor: '#4f46e5',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.parsed.y + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 建立整體提及率圖表
+        function createOverallChart(data, brand, competitors) {
+            // 銷毀舊的圖表
+            destroyChart(overallChartInstance);
+            
+            const ctx = document.getElementById('overallChart').getContext('2d');
+            const allBrands = [brand, ...competitors];
+            const datasets = allBrands.map((brandName, index) => ({
+                label: brandName,
+                data: data.map(item => item[brandName] || 0),
+                backgroundColor: BAR_COLORS[index % BAR_COLORS.length],
+                borderColor: BAR_COLORS[index % BAR_COLORS.length],
+                borderWidth: 1
+            }));
+
+            overallChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(item => item.name),
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        }
+                    }
+                }
+            });
+        }
+
         // 建議競爭對手
         async function suggestCompetitors() {
             const industry = document.getElementById('industry').value;
@@ -566,124 +705,6 @@ const QUESTION_CLASSIFIER_RULES = {
         // 顯示結果
         function showResults() {
             document.getElementById('results').classList.remove('hidden');
-        }
-
-        // 建立提及次數圖表
-        function createMentionChart(data) {
-            const ctx = document.getElementById('mentionChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: data.map(item => item.name),
-                    datasets: [{
-                        label: '提及次數',
-                        data: data.map(item => item.mentions),
-                        backgroundColor: '#4f46e5',
-                        borderColor: '#4f46e5',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                stepSize: 1
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    }
-                }
-            });
-        }
-
-        // 建立正確度圖表
-        function createAccuracyChart(data) {
-            const ctx = document.getElementById('accuracyChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: data.map(item => item.question_id),
-                    datasets: [{
-                        label: '覆蓋率',
-                        data: data.map(item => item.coverage_rate),
-                        backgroundColor: '#4f46e5',
-                        borderColor: '#4f46e5',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: 100,
-                            ticks: {
-                                callback: function(value) {
-                                    return value + '%';
-                                }
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return context.parsed.y + '%';
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // 建立整體提及率圖表
-        function createOverallChart(data, brand, competitors) {
-            const ctx = document.getElementById('overallChart').getContext('2d');
-            const allBrands = [brand, ...competitors];
-            const datasets = allBrands.map((brandName, index) => ({
-                label: brandName,
-                data: data.map(item => item[brandName] || 0),
-                backgroundColor: BAR_COLORS[index % BAR_COLORS.length],
-                borderColor: BAR_COLORS[index % BAR_COLORS.length],
-                borderWidth: 1
-            }));
-
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: data.map(item => item.name),
-                    datasets: datasets
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                stepSize: 1
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            position: 'top'
-                        }
-                    }
-                }
-            });
         }
 
         // 主要分析函數
